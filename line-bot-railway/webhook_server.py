@@ -99,12 +99,13 @@ def handle_message(event):
         except Exception as e:
             print(f"❌ Error sending Flex Message: {e}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
-    elif msg not in ["您好", "請問", "不好意思", "我想問"]:
+    elif msg  in ["您好", "請問", "不好意思", "我想問"]:
+        
     line_bot_api.reply_message(event.reply_token, TextSendMessage(
         text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
     
     else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="點擊下方選單選擇您想知道的資訊！"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
