@@ -44,7 +44,7 @@ def handle_message(event):
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
         reserved = json.load(f)  # List of dicts: {userId, displayName, time}
 
-    if msg == "我要預約":
+    if "預約" in msg or "體驗" in msg:
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
@@ -93,7 +93,7 @@ def handle_message(event):
                 text=f"預約成功 🎉\n妳預約的時間是：{time_str}\n我們會記得妳的名字喔，{display_name}！"))
 
     else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請輸入『我要預約』開始選擇時段 🕰️"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請輸入『我要預約』或點選按鈕來開始預約 🕰️"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
