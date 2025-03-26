@@ -44,29 +44,7 @@ def handle_message(event):
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
         reserved = json.load(f)  # List of dicts: {userId, displayName, time}
 
-    if "預約" in msg or "體驗" in msg:
-        try:
-            with open(FLEX_FILE, "r", encoding="utf-8") as f:
-                flex = json.load(f)
-
-            reserved_times = [r["time"] for r in reserved]
-
-            # 移除已預約的時間按鈕
-            for bubble in flex["contents"]:
-                button_box = bubble["body"]["contents"][3]["contents"]
-                button_box = [
-                    btn for btn in button_box
-                    if btn.get("action", {}).get("text") not in reserved_times
-                ]
-                bubble["body"]["contents"][3]["contents"] = button_box
-
-            flex_msg = FlexSendMessage(alt_text="請選擇預約時段", contents=flex)
-            line_bot_api.reply_message(event.reply_token, flex_msg)
-        except Exception as e:
-            print(f"❌ Error sending Flex Message: {e}")
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
-
-    elif msg.startswith("我想預約"):
+    if msg.startswith("我想預約"):
         time_str = msg.replace("我想預約 ", "").strip()
         reserved_times = [r["time"] for r in reserved]
 
@@ -91,6 +69,28 @@ def handle_message(event):
 
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
                 text=f"預約成功 🎉\n妳預約的時間是：{time_str}\n我們會記得妳的名字喔，{display_name}！"))
+
+    elif "體驗" in msg:
+        try:
+            with open(FLEX_FILE, "r", encoding="utf-8") as f:
+                flex = json.load(f)
+
+            reserved_times = [r["time"] for r in reserved]
+
+            # 移除已預約的時間按鈕
+            for bubble in flex["contents"]:
+                button_box = bubble["body"]["contents"][3]["contents"]
+                button_box = [
+                    btn for btn in button_box
+                    if btn.get("action", {}).get("text") not in reserved_times
+                ]
+                bubble["body"]["contents"][3]["contents"] = button_box
+
+            flex_msg = FlexSendMessage(alt_text="請選擇預約時段", contents=flex)
+            line_bot_api.reply_message(event.reply_token, flex_msg)
+        except Exception as e:
+            print(f"❌ Error sending Flex Message: {e}")
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
 
     else:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請輸入『我要預約』或點選按鈕來開始預約 🕰️"))
