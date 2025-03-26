@@ -47,7 +47,7 @@ def handle_message(event):
 
     if msg.startswith("我想預約"):
         time_str = msg.replace("我想預約 ", "").strip()
-        reserved_times = [r["time"] for r in reserved]
+        reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
 
         if time_str in reserved_times:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="這個時段已經被預約囉～請選擇其他時段 💔"))
@@ -62,7 +62,7 @@ def handle_message(event):
             new_reservation = {
                 "userId": user_id,
                 "displayName": display_name,
-                "time": time_str
+                "time": msg  # 保留完整文字，例如 "我想預約 04/07 13:00"
             }
             reserved.append(new_reservation)
             with open(RESERVED_FILE, "w", encoding="utf-8") as f:
@@ -75,21 +75,22 @@ def handle_message(event):
                 print(f"⚠️ 寫入 Google Sheet 失敗: {e}")
 
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～～{display_name}！"))
+                text=f"預約成功 🎉\n妳預約的時間是：{time_str}\n我們會記得妳的名字喔，{display_name}！"))
 
     elif "體驗" in msg:
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
 
-            reserved_times = [r["time"] for r in reserved]
+            # 擷取已預約時間（只留時間部分）
+            reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
 
             # 移除已預約的時間按鈕
             for bubble in flex["contents"]:
                 button_box = bubble["body"]["contents"][3]["contents"]
                 button_box = [
                     btn for btn in button_box
-                    if btn.get("action", {}).get("text") not in reserved_times
+                    if btn.get("action", {}).get("text", "").replace("我想預約 ", "").strip() not in reserved_times
                 ]
                 bubble["body"]["contents"][3]["contents"] = button_box
 
