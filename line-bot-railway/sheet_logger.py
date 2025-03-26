@@ -6,7 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # Google Sheets 設定
 SHEET_ID = "1JhRJhdQmZ2PA0mM3g3RGXr5Upt8glr0_rH3yT0gqcqM"
-SHEET_NAME = "Sheet1"  # 如果妳的表單名稱不是 Sheet1 請改這裡
+SHEET_NAME = "LineBot預約記錄"  # 如果妳的表單名稱不是 Sheet1 請改這裡
 
 # 從環境變數取得 JSON 金鑰
 json_content = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
