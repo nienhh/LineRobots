@@ -4,6 +4,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendM
 from linebot.exceptions import InvalidSignatureError
 import os
 import json
+from sheet_logger import log_reservation
 
 app = Flask(__name__)
 
@@ -67,8 +68,14 @@ def handle_message(event):
             with open(RESERVED_FILE, "w", encoding="utf-8") as f:
                 json.dump(reserved, f, ensure_ascii=False, indent=2)
 
+            # 寫入 Google Sheet
+            try:
+                log_reservation(display_name, user_id, time_str)
+            except Exception as e:
+                print(f"⚠️ 寫入 Google Sheet 失敗: {e}")
+
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"預約成功 🎉\n 您預約的時間是：{time_str}\n Jenny會記得您的名字哦～{display_name}！"))
+                text=f"預約成功 🎉\n妳預約的時間是：{time_str}\n我們會記得妳的名字喔，{display_name}！"))
 
     elif "體驗" in msg:
         try:
@@ -93,7 +100,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
 
     else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="點選下方選單按鈕來預約Jenny的展覽🕰️ "))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請輸入『我要預約』或點選按鈕來開始預約 🕰️"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
