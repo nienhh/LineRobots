@@ -101,7 +101,7 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
 
     else:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請輸入『我要預約』或點選按鈕來開始預約 🕰️"))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
