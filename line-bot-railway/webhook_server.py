@@ -75,7 +75,7 @@ def handle_message(event):
                 print(f"⚠️ 寫入 Google Sheet 失敗: {e}")
 
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"預約成功 🎉\n您預約的時間是：{time_str}\n Jenny會記得您的名字哦～～{display_name}！"))
+                text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～～{display_name}！"))
 
     elif "體驗" in msg:
         try:
