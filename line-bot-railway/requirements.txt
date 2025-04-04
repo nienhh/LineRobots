@@ -1,4 +1,4 @@
-flask
+flask-login
 line-bot-sdk
 gspread
 oauth2client
