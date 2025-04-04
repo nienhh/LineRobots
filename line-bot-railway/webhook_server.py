@@ -103,6 +103,15 @@ def handle_message(event):
         
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
             text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
+
+@app.route("/debug/reserved")
+def debug_reserved():
+    try:
+        with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {"status": "ok", "data": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
         
 
 if __name__ == "__main__":
