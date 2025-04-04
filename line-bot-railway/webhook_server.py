@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, render_template_string, redirect
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendMessage
 from linebot.exceptions import InvalidSignatureError
@@ -8,13 +8,16 @@ from sheet_logger import log_reservation
 
 app = Flask(__name__)
 
-# LINE credentials from environment variables
+# LINE credentials
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
 # File paths
 FLEX_FILE = "flex_booking.json"
 RESERVED_FILE = "reserved.json"
+
+# Admin password
+ADMIN_PASSWORD = "jenny1111$"
 
 # Ensure reserved.json exists
 if not os.path.exists(RESERVED_FILE):
@@ -41,9 +44,8 @@ def handle_message(event):
     msg = event.message.text.strip()
     user_id = event.source.user_id
 
-    # Load reserved time list
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-        reserved = json.load(f)  # List of dicts: {userId, displayName, time}
+        reserved = json.load(f)
 
     if msg.startswith("我想預約"):
         time_str = msg.replace("我想預約 ", "").strip()
@@ -62,13 +64,12 @@ def handle_message(event):
             new_reservation = {
                 "userId": user_id,
                 "displayName": display_name,
-                "time": msg  # 保留完整文字，例如 "我想預約 04/07 13:00"
+                "time": msg
             }
             reserved.append(new_reservation)
             with open(RESERVED_FILE, "w", encoding="utf-8") as f:
                 json.dump(reserved, f, ensure_ascii=False, indent=2)
 
-            # 寫入 Google Sheet
             try:
                 log_reservation(display_name, user_id, time_str)
             except Exception as e:
@@ -82,10 +83,8 @@ def handle_message(event):
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
 
-            # 擷取已預約時間（只留時間部分）
             reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
 
-            # 移除已預約的時間按鈕
             for bubble in flex["contents"]:
                 button_box = bubble["body"]["contents"][3]["contents"]
                 button_box = [
@@ -99,11 +98,12 @@ def handle_message(event):
         except Exception as e:
             print(f"❌ Error sending Flex Message: {e}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
-    elif msg  in ["您好", "請問", "不好意思", "我想問"]:
-        
+
+    elif msg in ["您好", "請問", "不好意思", "我想問"]:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
             text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
 
+# 👉 Debug 用查看 reserved.json
 @app.route("/debug/reserved")
 def debug_reserved():
     try:
@@ -112,7 +112,58 @@ def debug_reserved():
         return {"status": "ok", "data": data}
     except Exception as e:
         return {"status": "error", "message": str(e)}
-        
+
+# 👉 Jenny 的預約後台頁面
+@app.route("/admin")
+def admin():
+    pw = request.args.get("pw", "")
+    if pw != ADMIN_PASSWORD:
+        return "🔒 權限不足，請輸入正確密碼： /admin?pw=你的密碼"
+
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+
+    table = ""
+    for r in reserved:
+        table += f"""
+        <tr>
+            <td>{r['displayName']}</td>
+            <td>{r['time']}</td>
+            <td><a href="/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}">🗑️ 刪除</a></td>
+        </tr>"""
+
+    html = f"""
+    <h2>🌸 Jenny 預約後台 🌸</h2>
+    <table border="1" cellpadding="8">
+        <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
+        {table}
+    </table>
+    """
+
+    return render_template_string(html)
+
+# 👉 刪除預約用
+@app.route("/delete")
+def delete_reservation():
+    user_id = request.args.get("userId")
+    time = request.args.get("time")
+    pw = request.args.get("pw")
+
+    if pw != ADMIN_PASSWORD:
+        return "❌ 權限錯誤"
+
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+
+    new_reserved = [
+        r for r in reserved
+        if not (r["userId"] == user_id and r["time"].replace("我想預約 ", "").strip() == time)
+    ]
+
+    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
+        json.dump(new_reserved, f, ensure_ascii=False, indent=2)
+
+    return redirect(f"/admin?pw={pw}")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
