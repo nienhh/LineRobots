@@ -52,7 +52,7 @@ def handle_message(event):
         reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
 
         if time_str in reserved_times:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="這個時段已經被預約囉～請選擇其他時段 💔"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="這個時段已經被預約囉～\n請選擇其他時段😢"))
         else:
             try:
                 profile = line_bot_api.get_profile(user_id)
