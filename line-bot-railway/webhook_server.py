@@ -166,7 +166,7 @@ def admin():
         <button type='submit'>送出修改</button>
     </form>
     """
-    """
+    return render_template_string(html)
     return render_template_string(html)
 
 @app.route("/delete")
