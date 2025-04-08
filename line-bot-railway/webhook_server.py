@@ -151,7 +151,21 @@ def admin():
             <td>{r['time']}</td>
             <td><a href=\"/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}\">🗑️ 刪除</a></td>
         </tr>"""
-    html = f""""""
+    html = f"""
+    <h2>🌸 Jenny 預約後台 🌸</h2>
+    <table border='1' cellpadding='8'>
+        <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
+        {table}
+    </table>
+    <p>✏️ 修改名稱請輸入新名稱並送出：</p>
+    <form action='/edit' method='post'>
+        <input type='text' name='userId' placeholder='使用者ID' required>
+        <input type='text' name='time' placeholder='時間（例如：04/10 13:00）' required>
+        <input type='text' name='newName' placeholder='新名稱' required>
+        <input type='hidden' name='pw' value='{pw}'>
+        <button type='submit'>送出修改</button>
+    </form>
+    """
     """
     return render_template_string(html)
 
