@@ -30,21 +30,8 @@ def load_and_clean_reservations():
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
         reserved = json.load(f)
 
-    cleaned_reserved = []
-    for r in reserved:
-        try:
-            time_text = r["time"].replace("我想預約 ", "").strip()
-            date_str = time_text.split()[0]
-            dt = datetime.strptime(date_str, "%m/%d").replace(year=today.year)
-            if dt.date() >= today:
-                cleaned_reserved.append(r)
-        except:
-            cleaned_reserved.append(r)
-
-    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
-        json.dump(cleaned_reserved, f, ensure_ascii=False, indent=2)
-
-    return cleaned_reserved
+    # ✅ 不清除任何資料，只是讀取
+    return reserved
 
 # 過濾 Flex bubble 中過期的日期
 
@@ -107,7 +94,7 @@ def handle_message(event):
             except Exception as e:
                 print(f"⚠️ 寫入 Google Sheet 失敗: {e}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～～{display_name}！"))
+                text=f"預約成功 🎉\n 您預約的時間是：{time_str}\n Jenny會記得您的名字哦～～{display_name}！"))
 
     elif "體驗" in msg:
         try:
