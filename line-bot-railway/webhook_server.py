@@ -159,7 +159,7 @@ def admin():
     </table>
     <p>✏️ 修改名稱請輸入新名稱並送出：</p>
     <form action='/edit' method='post'>
-        <input type='text' name='userId' placeholder='使用者ID' required>
+        <input type='text' name='displayName' placeholder='原本名稱（例如：心薇）' required>
         <input type='text' name='time' placeholder='時間（例如：04/10 13:00）' required>
         <input type='text' name='newName' placeholder='新名稱' required>
         <input type='hidden' name='pw' value='{pw}'>
@@ -188,7 +188,7 @@ def delete_reservation():
 
 @app.route("/edit", methods=["POST"])
 def edit_display_name():
-    user_id = request.form.get("userId")
+    name = request.form.get("displayName")
     time = request.form.get("time")
     new_name = request.form.get("newName")
     pw = request.form.get("pw")
@@ -200,7 +200,7 @@ def edit_display_name():
         reserved = json.load(f)
 
     for r in reserved:
-        if r["userId"] == user_id and r["time"].replace("我想預約 ", "").strip() == time:
+        if r["displayName"] == name and r["time"].replace("我想預約 ", "").strip() == time:
             r["displayName"] = new_name
 
     with open(RESERVED_FILE, "w", encoding="utf-8") as f:
