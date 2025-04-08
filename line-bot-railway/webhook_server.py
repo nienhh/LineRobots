@@ -119,11 +119,15 @@ def handle_message(event):
                 try:
                     for content in bubble["body"]["contents"]:
                         if content["type"] == "box" and "contents" in content:
-                            content["contents"] = [
-                                btn for btn in content["contents"]
-                                if btn.get("type") != "button" or
-                                btn.get("action", {}).get("text", "").replace("我想預約 ", "").strip() not in reserved_times
-                            ]
+                            filtered_buttons = []
+                            for btn in content["contents"]:
+                                action_text = btn.get("action", {}).get("text", "")
+                                clean_time = action_text.replace("我想預約 ", "").strip()
+                                if btn.get("type") != "button" or clean_time not in reserved_times:
+                                    filtered_buttons.append(btn)
+                                else:
+                                    print(f"❌ 已過濾按鈕：{clean_time}")
+                            content["contents"] = filtered_buttons
                 except Exception as e:
                     print(f"⚠️ Flex bubble 過濾按鈕失敗: {e}")
             flex_msg = FlexSendMessage(alt_text="請選擇預約時段", contents=flex)
