@@ -94,7 +94,7 @@ def handle_message(event):
             except Exception as e:
                 print(f"⚠️ 寫入 Google Sheet 失敗: {e}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～～{display_name}！"))
+                text=f"預約成功 🎉\n 您預約的時間是：{time_str}\n Jenny會記得您的名字哦～～{display_name}！"))
 
     elif "體驗" in msg:
         try:
@@ -157,6 +157,15 @@ def admin():
         <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
         {table}
     </table>
+    <p>✏️ 修改名稱請輸入新名稱並送出：</p>
+    <form action='/edit' method='post'>
+        <input type='text' name='userId' placeholder='使用者ID' required>
+        <input type='text' name='time' placeholder='時間（例如：04/10 13:00）' required>
+        <input type='text' name='newName' placeholder='新名稱' required>
+        <input type='hidden' name='pw' value='{pw}'>
+        <button type='submit'>送出修改</button>
+    </form>
+    """
     """
     return render_template_string(html)
 
@@ -177,5 +186,26 @@ def delete_reservation():
         json.dump(new_reserved, f, ensure_ascii=False, indent=2)
     return redirect(f"/admin?pw={pw}")
 
+@app.route("/edit", methods=["POST"])
+def edit_display_name():
+    user_id = request.form.get("userId")
+    time = request.form.get("time")
+    new_name = request.form.get("newName")
+    pw = request.form.get("pw")
+
+    if pw != ADMIN_PASSWORD:
+        return "❌ 權限錯誤"
+
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+
+    for r in reserved:
+        if r["userId"] == user_id and r["time"].replace("我想預約 ", "").strip() == time:
+            r["displayName"] = new_name
+
+    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
+        json.dump(reserved, f, ensure_ascii=False, indent=2)
+
+    return redirect(f"/admin?pw={pw}")
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
