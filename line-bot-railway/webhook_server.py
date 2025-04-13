@@ -15,6 +15,7 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 FLEX_FILE = "flex_booking.json"
 RESERVED_FILE = "reserved.json"
 ADMIN_PASSWORD = "jenny1111$"
+OWNER_ID = "U6be2833d99bbaedc4a590d4f444f169a"
 
 # 確保 reserved.json 存在
 if not os.path.exists(RESERVED_FILE):
@@ -70,6 +71,9 @@ def handle_message(event):
     reserved = load_and_clean_reservations()
 
     if msg.startswith("我想預約"):
+        if user_id != OWNER_ID:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="目前預約功能僅限主理人使用 ✋"))
+            return
         time_str = msg.replace("我想預約 ", "").strip()
         reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
         if time_str in reserved_times:
@@ -97,6 +101,10 @@ def handle_message(event):
                 text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～～{display_name}！"))
 
     elif "體驗" in msg:
+        if user_id != OWNER_ID:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="本預約功能尚未開放給大眾，敬請期待 👀"))
+            return
+        
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
