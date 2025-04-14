@@ -155,60 +155,80 @@ def admin():
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
         reserved = json.load(f)
 
-    # 🔸 按日期分組
     grouped = defaultdict(list)
     for r in reserved:
         try:
             time_str = r['time'].replace("我想預約 ", "").strip()
-            date_part = time_str.split()[0]  # 例如 "4/25"
-            grouped[date_part].append({
-                "displayName": r["displayName"],
-                "time": time_str,
-                "userId": r["userId"]
-            })
+            date_part = time_str.split()[0]
+            grouped[date_part].append(r)
         except Exception as e:
             print(f"⚠️ 分組失敗: {e}")
             continue
 
-    # 🔸 產生 HTML 區塊（每個日期一張表）
+    # 產生每個日期的區塊（套用狀態樣式）
     section_html = ""
     for date_key in sorted(grouped.keys()):
         table_rows = ""
         for r in grouped[date_key]:
-            delete_link = f"/delete?userId={r['userId']}&time={r['time']}&pw={pw}"
+            style = ""
+            if r.get("status") == "missed":
+                style = "text-danger"
+            elif r.get("status") == "done":
+                style = "text-decoration-line-through text-muted"
+
             table_rows += f"""
-            <tr>
+            <tr class="{style}">
                 <td>{r['displayName']}</td>
                 <td>{r['time']}</td>
-                <td><a href="{delete_link}">🗑️ 刪除</a></td>
+                <td>
+                    <a href="/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}" class="btn btn-sm btn-outline-danger">刪除</a>
+                    <a href="/mark_status?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&status=missed&pw={pw}" class="btn btn-sm btn-outline-warning">過號</a>
+                    <a href="/mark_status?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&status=done&pw={pw}" class="btn btn-sm btn-outline-success">已體驗</a>
+                </td>
             </tr>"""
 
         section_html += f"""
-        <h3>📅 {date_key}</h3>
-        <table border="1" cellpadding="8" cellspacing="0">
-            <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
-            {table_rows}
+        <h4 class="mt-5">📅 {date_key}</h4>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark"><tr><th>名稱</th><th>時間</th><th>操作</th></tr></thead>
+            <tbody>{table_rows}</tbody>
         </table>
-        <br>
         """
 
-    # 🔸 修改名稱表單區塊
     form_html = f"""
     <hr>
-    <h3>✏️ 修改名稱</h3>
-    <form action='/edit' method='post'>
-        <input type='text' name='displayName' placeholder='原本名稱（例如：心薇）' required>
-        <input type='text' name='time' placeholder='時間（例如：4/25 13:00）' required>
-        <input type='text' name='newName' placeholder='新名稱' required>
+    <h4>✏️ 修改名稱</h4>
+    <form action='/edit' method='post' class="row g-3">
+        <div class="col-md-3">
+            <input type='text' name='displayName' class="form-control" placeholder='原本名稱（例如：心薇）' required>
+        </div>
+        <div class="col-md-3">
+            <input type='text' name='time' class="form-control" placeholder='時間（例如：4/25 13:00）' required>
+        </div>
+        <div class="col-md-3">
+            <input type='text' name='newName' class="form-control" placeholder='新名稱' required>
+        </div>
         <input type='hidden' name='pw' value='{pw}'>
-        <button type='submit'>送出修改</button>
+        <div class="col-md-3">
+            <button type='submit' class="btn btn-primary">送出修改</button>
+        </div>
     </form>
     """
 
     html = f"""
-    <h2>🌸 Jenny 預約後台 🌸</h2>
-    {section_html}
-    {form_html}
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Jenny 預約後台</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body class="container mt-4">
+        <h2 class="mb-4">🌸 Jenny 預約後台 🌸</h2>
+        {section_html}
+        {form_html}
+    </body>
+    </html>
     """
     return render_template_string(html)
 
@@ -245,6 +265,28 @@ def edit_display_name():
     for r in reserved:
         if r["displayName"] == name and r["time"].replace("我想預約 ", "").strip() == time:
             r["displayName"] = new_name
+
+    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
+        json.dump(reserved, f, ensure_ascii=False, indent=2)
+
+    return redirect(f"/admin?pw={pw}")
+
+@app.route("/mark_status")
+def mark_status():
+    user_id = request.args.get("userId")
+    time = request.args.get("time")
+    status = request.args.get("status")
+    pw = request.args.get("pw")
+
+    if pw != ADMIN_PASSWORD:
+        return "❌ 權限錯誤"
+
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+
+    for r in reserved:
+        if r["userId"] == user_id and r["time"].replace("我想預約 ", "").strip() == time:
+            r["status"] = status  # "missed" 或 "done"
 
     with open(RESERVED_FILE, "w", encoding="utf-8") as f:
         json.dump(reserved, f, ensure_ascii=False, indent=2)
