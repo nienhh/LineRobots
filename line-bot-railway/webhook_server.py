@@ -130,13 +130,16 @@ def admin():
     if pw != ADMIN_PASSWORD:
         return "🔒 權限不足，請輸入正確密碼： /admin?pw=你的密碼"
 
-    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-        reserved = json.load(f)
+    try:
+        with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+            reserved = json.load(f)
+    except Exception as e:
+        return f"❌ 無法讀取 reserved.json：{e}"
 
     grouped = defaultdict(list)
     for r in reserved:
         try:
-            time_str = r['time'].replace("我想預約 ", "").strip()
+            time_str = r.get('time', '').replace("我想預約 ", "").strip()
             date_part = time_str.split()[0]
             grouped[date_part].append(r)
         except Exception as e:
@@ -146,46 +149,40 @@ def admin():
     section_html = ""
     for date_key in sorted(grouped.keys()):
         table_rows = ""
-        # ✨ 加上這行：先將同一天的預約按照時間排序
-        sorted_reservations = sorted(
-            grouped[date_key],
-            key=lambda r: datetime.strptime(r['time'].replace("我想預約 ", "").strip(), "%m/%d %H:%M")
-        )
+        try:
+            sorted_reservations = sorted(
+                grouped[date_key],
+                key=lambda r: datetime.strptime(r.get('time', '').replace("我想預約 ", "").strip(), "%m/%d %H:%M")
+            )
+        except Exception as e:
+            print(f"⚠️ 日期排序失敗: {e}")
+            sorted_reservations = grouped[date_key]
 
         for r in sorted_reservations:
+            name = r.get('displayName', 'unknown')
+            uid = r.get('userId', '')
+            time = r.get('time', '未知時間')
+            clean_time = time.replace("我想預約 ", "").strip()
+            row_class = ""
+            button_class = ""
             if r.get("status") == "missed":
-                table_rows += f"""
-                <tr class='table-danger'>
-                    <td class='text-danger fw-bold'>{r['displayName']}</td>
-                    <td class='text-danger fw-bold'>{r['time']}</td>
-                    <td>
-                        <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
-                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
-                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
-                    </td>
-                </tr>"""
+                row_class = "table-danger"
+                button_class = "text-danger fw-bold"
             elif r.get("status") == "done":
-                table_rows += f"""
-                <tr class='line-through-bold'>
-                    <td>{r['displayName']}</td>
-                    <td>{r['time']}</td>
+                row_class = "line-through-bold"
+                button_class = ""
+
+            table_rows += f"""
+                <tr class='{row_class}'>
+                    <td class='{button_class}'>{name}</td>
+                    <td class='{button_class}'>{time}</td>
                     <td>
-                        <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
-                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
-                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
+                        <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
+                        <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
+                        <a href='/mark_status?userId={uid}&time={clean_time}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
                     </td>
-                </tr>"""
-            else:
-                table_rows += f"""
-                <tr>
-                    <td>{r['displayName']}</td>
-                    <td>{r['time']}</td>
-                    <td>
-                        <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
-                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
-                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
-                    </td>
-                </tr>"""
+                </tr>
+            """
 
         section_html += f"""
         <h4 class='mt-5'>📅 {date_key}</h4>
@@ -202,11 +199,11 @@ def admin():
         <title>Jenny 預約後台</title>
         <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
         <style>
-            .line-through-bold {
+            .line-through-bold {{
                 text-decoration: line-through;
                 text-decoration-thickness: 2.5px;
                 color: #6c757d !important;
-            }
+            }}
         </style>
     </head>
     <body class='container mt-4'>
@@ -232,6 +229,7 @@ def admin():
     </html>
     """
     return render_template_string(html)
+
 
 @app.route("/delete")
 def delete_reservation():
