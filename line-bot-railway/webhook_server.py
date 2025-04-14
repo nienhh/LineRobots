@@ -4,7 +4,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendM
 from linebot.exceptions import InvalidSignatureError
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from sheet_logger import log_reservation
 
 app = Flask(__name__)
@@ -17,15 +17,24 @@ RESERVED_FILE = "reserved.json"
 ADMIN_PASSWORD = "jenny1111$"
 OWNER_ID = "U6be2833d99bbaedc4a590d4f444f169a"
 
+# 確保 reserved.json 存在
 if not os.path.exists(RESERVED_FILE):
     with open(RESERVED_FILE, "w", encoding="utf-8") as f:
         json.dump([], f)
 
+# 自動清除過期的預約資料
 def load_and_clean_reservations():
+    today = datetime.today().date()
     if not os.path.exists(RESERVED_FILE):
         return []
+
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        reserved = json.load(f)
+
+    # ✅ 不清除任何資料，只是讀取
+    return reserved
+
+# 過濾 Flex bubble 中過期的日期
 
 def filter_flex_by_date(flex):
     today = datetime.today().date()
@@ -58,6 +67,7 @@ def callback():
 def handle_message(event):
     msg = event.message.text.strip()
     user_id = event.source.user_id
+
     reserved = load_and_clean_reservations()
 
     if msg.startswith("我想預約"):
@@ -78,9 +88,7 @@ def handle_message(event):
             new_reservation = {
                 "userId": user_id,
                 "displayName": display_name,
-                "time": msg,
-                "phone": "",
-                "status": "active"
+                "time": msg
             }
             reserved.append(new_reservation)
             with open(RESERVED_FILE, "w", encoding="utf-8") as f:
@@ -92,11 +100,11 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
                 text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～{display_name}！"))
 
-    elif "體驗" in msg or "預約" in msg:
+    elif "體驗" in msg:
         if user_id != OWNER_ID:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="本預約功能尚未開\n敬請期待 👀"))
             return
-
+        
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
@@ -122,3 +130,91 @@ def handle_message(event):
         except Exception as e:
             print(f"❌ Error sending Flex Message: {e}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="讀取預約資訊時發生錯誤，請稍後再試。"))
+
+    elif msg in ["您好", "請問", "不好意思", "我想問"]:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(
+            text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
+
+@app.route("/debug/reserved")
+def debug_reserved():
+    try:
+        with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return {"status": "ok", "data": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.route("/admin")
+def admin():
+    pw = request.args.get("pw", "")
+    if pw != ADMIN_PASSWORD:
+        return "🔒 權限不足，請輸入正確密碼： /admin?pw=你的密碼"
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+    table = ""
+    for r in reserved:
+        table += f"""
+        <tr>
+            <td>{r['displayName']}</td>
+            <td>{r['time']}</td>
+            <td><a href=\"/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}\">🗑️ 刪除</a></td>
+        </tr>"""
+    html = f"""
+    <h2>🌸 Jenny 預約後台 🌸</h2>
+    <table border='1' cellpadding='8'>
+        <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
+        {table}
+    </table>
+    <p>✏️ 修改名稱請輸入新名稱並送出：</p>
+    <form action='/edit' method='post'>
+        <input type='text' name='displayName' placeholder='原本名稱（例如：心薇）' required>
+        <input type='text' name='time' placeholder='時間（例如：04/10 13:00）' required>
+        <input type='text' name='newName' placeholder='新名稱' required>
+        <input type='hidden' name='pw' value='{pw}'>
+        <button type='submit'>送出修改</button>
+    </form>
+    """
+    return render_template_string(html)
+    return render_template_string(html)
+
+@app.route("/delete")
+def delete_reservation():
+    user_id = request.args.get("userId")
+    time = request.args.get("time")
+    pw = request.args.get("pw")
+    if pw != ADMIN_PASSWORD:
+        return "❌ 權限錯誤"
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+    new_reserved = [
+        r for r in reserved
+        if not (r["userId"] == user_id and r["time"].replace("我想預約 ", "").strip() == time)
+    ]
+    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
+        json.dump(new_reserved, f, ensure_ascii=False, indent=2)
+    return redirect(f"/admin?pw={pw}")
+
+@app.route("/edit", methods=["POST"])
+def edit_display_name():
+    name = request.form.get("displayName")
+    time = request.form.get("time")
+    new_name = request.form.get("newName")
+    pw = request.form.get("pw")
+
+    if pw != ADMIN_PASSWORD:
+        return "❌ 權限錯誤"
+
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+
+    for r in reserved:
+        if r["displayName"] == name and r["time"].replace("我想預約 ", "").strip() == time:
+            r["displayName"] = new_name
+
+    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
+        json.dump(reserved, f, ensure_ascii=False, indent=2)
+
+    return redirect(f"/admin?pw={pw}")
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
