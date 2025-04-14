@@ -8,7 +8,6 @@ from datetime import datetime
 from sheet_logger import log_reservation
 from collections import defaultdict
 
-
 app = Flask(__name__)
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
@@ -19,24 +18,15 @@ RESERVED_FILE = "reserved.json"
 ADMIN_PASSWORD = "jenny1111$"
 OWNER_ID = "U6be2833d99bbaedc4a590d4f444f169a"
 
-# 確保 reserved.json 存在
 if not os.path.exists(RESERVED_FILE):
     with open(RESERVED_FILE, "w", encoding="utf-8") as f:
         json.dump([], f)
 
-# 自動清除過期的預約資料
 def load_and_clean_reservations():
-    today = datetime.today().date()
     if not os.path.exists(RESERVED_FILE):
         return []
-
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-        reserved = json.load(f)
-
-    # ✅ 不清除任何資料，只是讀取
-    return reserved
-
-# 過濾 Flex bubble 中過期的日期
+        return json.load(f)
 
 def filter_flex_by_date(flex):
     today = datetime.today().date()
@@ -69,7 +59,6 @@ def callback():
 def handle_message(event):
     msg = event.message.text.strip()
     user_id = event.source.user_id
-
     reserved = load_and_clean_reservations()
 
     if msg.startswith("我想預約"):
@@ -90,7 +79,8 @@ def handle_message(event):
             new_reservation = {
                 "userId": user_id,
                 "displayName": display_name,
-                "time": msg
+                "time": msg,
+                "status": "active"
             }
             reserved.append(new_reservation)
             with open(RESERVED_FILE, "w", encoding="utf-8") as f:
@@ -106,7 +96,6 @@ def handle_message(event):
         if user_id != OWNER_ID:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text="本預約功能尚未開\n敬請期待 👀"))
             return
-        
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
@@ -122,8 +111,6 @@ def handle_message(event):
                                 clean_time = action_text.replace("我想預約 ", "").strip()
                                 if btn.get("type") != "button" or clean_time not in reserved_times:
                                     filtered_buttons.append(btn)
-                                else:
-                                    print(f"❌ 已過濾按鈕：{clean_time}")
                             content["contents"] = filtered_buttons
                 except Exception as e:
                     print(f"⚠️ Flex bubble 過濾按鈕失敗: {e}")
@@ -136,15 +123,6 @@ def handle_message(event):
     elif msg in ["您好", "請問", "不好意思", "我想問"]:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
             text="感謝您的訊息！\nbroqué 忙線中，稍候回覆您🤧"))
-
-@app.route("/debug/reserved")
-def debug_reserved():
-    try:
-        with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return {"status": "ok", "data": data}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 @app.route("/admin")
 def admin():
@@ -165,68 +143,46 @@ def admin():
             print(f"⚠️ 分組失敗: {e}")
             continue
 
-    # 產生每個日期的區塊（套用狀態樣式）
     section_html = ""
     for date_key in sorted(grouped.keys()):
         table_rows = ""
         for r in grouped[date_key]:
-            style = ""
             if r.get("status") == "missed":
-                style = "text-danger"
+                row_class = "table-danger"
             elif r.get("status") == "done":
-                style = "text-decoration-line-through text-muted"
+                row_class = "text-decoration-line-through text-muted"
+            else:
+                row_class = ""
 
             table_rows += f"""
-            <tr class="{style}">
+            <tr class='{row_class}'>
                 <td>{r['displayName']}</td>
                 <td>{r['time']}</td>
                 <td>
-                    <a href="/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}" class="btn btn-sm btn-outline-danger">刪除</a>
-                    <a href="/mark_status?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&status=missed&pw={pw}" class="btn btn-sm btn-outline-warning">過號</a>
-                    <a href="/mark_status?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&status=done&pw={pw}" class="btn btn-sm btn-outline-success">已體驗</a>
+                    <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
+                    <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
+                    <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
                 </td>
             </tr>"""
 
         section_html += f"""
-        <h4 class="mt-5">📅 {date_key}</h4>
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark"><tr><th>名稱</th><th>時間</th><th>操作</th></tr></thead>
+        <h4 class='mt-5'>📅 {date_key}</h4>
+        <table class='table table-bordered table-striped'>
+            <thead class='table-dark'><tr><th>名稱</th><th>時間</th><th>操作</th></tr></thead>
             <tbody>{table_rows}</tbody>
-        </table>
-        """
-
-    form_html = f"""
-    <hr>
-    <h4>✏️ 修改名稱</h4>
-    <form action='/edit' method='post' class="row g-3">
-        <div class="col-md-3">
-            <input type='text' name='displayName' class="form-control" placeholder='原本名稱（例如：心薇）' required>
-        </div>
-        <div class="col-md-3">
-            <input type='text' name='time' class="form-control" placeholder='時間（例如：4/25 13:00）' required>
-        </div>
-        <div class="col-md-3">
-            <input type='text' name='newName' class="form-control" placeholder='新名稱' required>
-        </div>
-        <input type='hidden' name='pw' value='{pw}'>
-        <div class="col-md-3">
-            <button type='submit' class="btn btn-primary">送出修改</button>
-        </div>
-    </form>
-    """
+        </table>"""
 
     html = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <meta charset="UTF-8">
+        <meta charset='UTF-8'>
         <title>Jenny 預約後台</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
     </head>
-    <body class="container mt-4">
-        <h2 class="mb-4">🌸 Jenny 預約後台 🌸</h2>
+    <body class='container mt-4'>
+        <h2 class='mb-4'>🌸 Jenny 預約後台 🌸</h2>
         {section_html}
-        {form_html}
     </body>
     </html>
     """
@@ -249,28 +205,6 @@ def delete_reservation():
         json.dump(new_reserved, f, ensure_ascii=False, indent=2)
     return redirect(f"/admin?pw={pw}")
 
-@app.route("/edit", methods=["POST"])
-def edit_display_name():
-    name = request.form.get("displayName")
-    time = request.form.get("time")
-    new_name = request.form.get("newName")
-    pw = request.form.get("pw")
-
-    if pw != ADMIN_PASSWORD:
-        return "❌ 權限錯誤"
-
-    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-        reserved = json.load(f)
-
-    for r in reserved:
-        if r["displayName"] == name and r["time"].replace("我想預約 ", "").strip() == time:
-            r["displayName"] = new_name
-
-    with open(RESERVED_FILE, "w", encoding="utf-8") as f:
-        json.dump(reserved, f, ensure_ascii=False, indent=2)
-
-    return redirect(f"/admin?pw={pw}")
-
 @app.route("/mark_status")
 def mark_status():
     user_id = request.args.get("userId")
@@ -286,7 +220,7 @@ def mark_status():
 
     for r in reserved:
         if r["userId"] == user_id and r["time"].replace("我想預約 ", "").strip() == time:
-            r["status"] = status  # "missed" 或 "done"
+            r["status"] = status
 
     with open(RESERVED_FILE, "w", encoding="utf-8") as f:
         json.dump(reserved, f, ensure_ascii=False, indent=2)
