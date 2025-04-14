@@ -148,7 +148,7 @@ def admin():
         table_rows = ""
         for r in grouped[date_key]:
             if r.get("status") == "missed":
-                row_class = "table-danger"
+                row_class = "table-danger text-danger"
             elif r.get("status") == "done":
                 row_class = "text-decoration-line-through text-muted"
             else:
@@ -183,6 +183,22 @@ def admin():
     <body class='container mt-4'>
         <h2 class='mb-4'>🌸 Jenny 預約後台 🌸</h2>
         {section_html}
+        <h5 class='mt-4'>✏️ 修改名稱</h5>
+        <form action='/edit' method='post' class='row g-2'>
+            <div class='col-md-3'>
+                <input type='text' name='displayName' class='form-control' placeholder='原本名稱（例如：心薇）' required>
+            </div>
+            <div class='col-md-3'>
+                <input type='text' name='time' class='form-control' placeholder='時間（例如：4/25 13:00）' required>
+            </div>
+            <div class='col-md-3'>
+                <input type='text' name='newName' class='form-control' placeholder='新名稱' required>
+            </div>
+            <input type='hidden' name='pw' value='{pw}'>
+            <div class='col-md-3'>
+                <button type='submit' class='btn btn-primary'>送出修改</button>
+            </div>
+        </form>
     </body>
     </html>
     """
