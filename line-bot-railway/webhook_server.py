@@ -6,6 +6,8 @@ import os
 import json
 from datetime import datetime
 from sheet_logger import log_reservation
+from collections import defaultdict
+
 
 app = Flask(__name__)
 
@@ -149,32 +151,46 @@ def admin():
     pw = request.args.get("pw", "")
     if pw != ADMIN_PASSWORD:
         return "🔒 權限不足，請輸入正確密碼： /admin?pw=你的密碼"
+
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
         reserved = json.load(f)
-    table = ""
+
+    # 🔹 將資料依照日期分組（defaultdict 用來整理區塊）
+    grouped = defaultdict(list)
     for r in reserved:
-        table += f"""
-        <tr>
-            <td>{r['displayName']}</td>
-            <td>{r['time']}</td>
-            <td><a href=\"/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}\">🗑️ 刪除</a></td>
-        </tr>"""
+        try:
+            time_str = r['time'].replace("我想預約 ", "").strip()
+            date_part = time_str.split()[0]  # 例如 "4/25"
+            grouped[date_part].append(r)
+        except Exception as e:
+            print(f"⚠️ 分組失敗: {e}")
+            continue
+
+    # 🔹 HTML 組裝
+    section_html = ""
+    for date_key in sorted(grouped.keys()):
+        section_html += f"<h3>🗓️ {date_key}</h3><ul>"
+        for r in grouped[date_key]:
+            section_html += f"""
+            <li>{r['displayName']}（{r['time']}）
+            <a href="/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}">🗑️ 刪除</a>
+            </li>
+            """
+        section_html += "</ul>"
+
     html = f"""
     <h2>🌸 Jenny 預約後台 🌸</h2>
-    <table border='1' cellpadding='8'>
-        <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
-        {table}
-    </table>
+    {section_html}
+    <hr>
     <p>✏️ 修改名稱請輸入新名稱並送出：</p>
     <form action='/edit' method='post'>
         <input type='text' name='displayName' placeholder='原本名稱（例如：心薇）' required>
-        <input type='text' name='time' placeholder='時間（例如：04/10 13:00）' required>
+        <input type='text' name='time' placeholder='時間（例如：4/25 13:00）' required>
         <input type='text' name='newName' placeholder='新名稱' required>
         <input type='hidden' name='pw' value='{pw}'>
         <button type='submit'>送出修改</button>
     </form>
     """
-    return render_template_string(html)
     return render_template_string(html)
 
 @app.route("/delete")
