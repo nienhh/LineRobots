@@ -177,10 +177,12 @@ def admin():
                 text_class = "text-muted"
 
             # 每一列 HTML
+            phone = r.get("phone", "-")
             table_rows += f"""
                 <tr class='{row_class}'>
                     <td class='{text_class}'>{name}</td>
                     <td class='{text_class}'>{time}</td>
+                    <td class='{text_class}'>{phone}</td>
                     <td>
                         <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
                         <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
