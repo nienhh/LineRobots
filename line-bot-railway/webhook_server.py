@@ -295,5 +295,39 @@ def mark_status():
 
     return redirect(f"/admin?pw={pw}")
 
+
+@app.route("/edit", methods=["POST"])
+def edit_reservation():
+    pw = request.form.get("pw", "")
+    if pw != ADMIN_PASSWORD:
+        return "❌ 權限錯誤"
+
+    old_name = request.form.get("displayName", "").strip()
+    time = request.form.get("time", "").strip()
+    new_name = request.form.get("newName", "").strip()
+    phone = request.form.get("phone", "").strip()
+
+    if not old_name or not time or not new_name:
+        return "❌ 請填寫完整資料"
+
+    with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+        reserved = json.load(f)
+
+    edited = False
+    for r in reserved:
+        time_clean = r.get("time", "").replace("我想預約 ", "").strip()
+        if r.get("displayName") == old_name and time_clean == time:
+            r["displayName"] = new_name
+            r["phone"] = phone
+            edited = True
+            break
+
+    if edited:
+        with open(RESERVED_FILE, "w", encoding="utf-8") as f:
+            json.dump(reserved, f, ensure_ascii=False, indent=2)
+        return redirect(f"/admin?pw={pw}")
+    else:
+        return "❌ 沒有找到符合的預約資料"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
