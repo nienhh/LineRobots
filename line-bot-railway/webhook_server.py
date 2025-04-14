@@ -174,7 +174,7 @@ def admin():
 
             table_rows += f"""
                 <tr class='{row_class}'>
-                    <td class='{button_class}'>{name}</td>
+                    <td>{name} <span class="text-success">✅</span></td>
                     <td class='{button_class}'>{time}</td>
                     <td>
                         <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
@@ -199,11 +199,15 @@ def admin():
         <title>Jenny 預約後台</title>
         <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
         <style>
-            .line-through-bold {{
+            .line-through-bold {
                 text-decoration: line-through;
-                text-decoration-thickness: 2.5px;
-                color: #6c757d !important;
-            }}
+                text-decoration-thickness: 2px;
+                color: #999 !important;
+                background-color: #f8f9fa !important;
+            }
+            .table-danger td {
+                background-color: #f8d7da !important;
+            }
         </style>
     </head>
     <body class='container mt-4'>
@@ -212,7 +216,7 @@ def admin():
         <h5 class='mt-4'>✏️ 修改名稱</h5>
         <form action='/edit' method='post' class='row g-2'>
             <div class='col-md-3'>
-                <input type='text' name='displayName' class='form-control' placeholder='原本名稱（例如：心薇）' required>
+                <input type='text' name='displayName' class='form-control' placeholder='原本名稱' required>
             </div>
             <div class='col-md-3'>
                 <input type='text' name='time' class='form-control' placeholder='時間（例如：4/25 13:00）' required>
