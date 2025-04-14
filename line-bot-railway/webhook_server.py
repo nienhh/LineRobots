@@ -155,34 +155,47 @@ def admin():
     with open(RESERVED_FILE, "r", encoding="utf-8") as f:
         reserved = json.load(f)
 
-    # 🔹 將資料依照日期分組（defaultdict 用來整理區塊）
+    # 🔸 按日期分組
     grouped = defaultdict(list)
     for r in reserved:
         try:
             time_str = r['time'].replace("我想預約 ", "").strip()
             date_part = time_str.split()[0]  # 例如 "4/25"
-            grouped[date_part].append(r)
+            grouped[date_part].append({
+                "displayName": r["displayName"],
+                "time": time_str,
+                "userId": r["userId"]
+            })
         except Exception as e:
             print(f"⚠️ 分組失敗: {e}")
             continue
 
-    # 🔹 HTML 組裝
+    # 🔸 產生 HTML 區塊（每個日期一張表）
     section_html = ""
     for date_key in sorted(grouped.keys()):
-        section_html += f"<h3>🗓️ {date_key}</h3><ul>"
+        table_rows = ""
         for r in grouped[date_key]:
-            section_html += f"""
-            <li>{r['displayName']}（{r['time']}）
-            <a href="/delete?userId={r['userId']}&time={r['time'].replace('我想預約 ', '').strip()}&pw={pw}">🗑️ 刪除</a>
-            </li>
-            """
-        section_html += "</ul>"
+            delete_link = f"/delete?userId={r['userId']}&time={r['time']}&pw={pw}"
+            table_rows += f"""
+            <tr>
+                <td>{r['displayName']}</td>
+                <td>{r['time']}</td>
+                <td><a href="{delete_link}">🗑️ 刪除</a></td>
+            </tr>"""
 
-    html = f"""
-    <h2>🌸 Jenny 預約後台 🌸</h2>
-    {section_html}
+        section_html += f"""
+        <h3>📅 {date_key}</h3>
+        <table border="1" cellpadding="8" cellspacing="0">
+            <tr><th>名稱</th><th>時間</th><th>操作</th></tr>
+            {table_rows}
+        </table>
+        <br>
+        """
+
+    # 🔸 修改名稱表單區塊
+    form_html = f"""
     <hr>
-    <p>✏️ 修改名稱請輸入新名稱並送出：</p>
+    <h3>✏️ 修改名稱</h3>
     <form action='/edit' method='post'>
         <input type='text' name='displayName' placeholder='原本名稱（例如：心薇）' required>
         <input type='text' name='time' placeholder='時間（例如：4/25 13:00）' required>
@@ -190,6 +203,12 @@ def admin():
         <input type='hidden' name='pw' value='{pw}'>
         <button type='submit'>送出修改</button>
     </form>
+    """
+
+    html = f"""
+    <h2>🌸 Jenny 預約後台 🌸</h2>
+    {section_html}
+    {form_html}
     """
     return render_template_string(html)
 
