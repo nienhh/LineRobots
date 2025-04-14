@@ -166,7 +166,7 @@ def admin():
                 </tr>"""
             elif r.get("status") == "done":
                 table_rows += f"""
-                <tr class='text-decoration-line-through text-muted'>
+                <tr class='line-through-bold'>
                     <td>{r['displayName']}</td>
                     <td>{r['time']}</td>
                     <td>
@@ -201,6 +201,13 @@ def admin():
         <meta charset='UTF-8'>
         <title>Jenny 預約後台</title>
         <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
+        <style>
+            .line-through-bold {
+                text-decoration: line-through;
+                text-decoration-thickness: 2.5px;
+                color: #6c757d !important;
+            }
+        </style>
     </head>
     <body class='container mt-4'>
         <h2 class='mb-4'>🌸 Jenny 預約後台 🌸</h2>
