@@ -169,12 +169,12 @@ def admin():
                 row_class = "table-danger"
                 button_class = "text-danger fw-bold"
             elif r.get("status") == "done":
-                row_class = "line-through-bold"
-                button_class = ""
+                row_class = "line-through-bold table-secondary"
+                button_class = "text-muted"
 
             table_rows += f"""
                 <tr class='{row_class}'>
-                    <td>{name} <span class="text-success">✅</span></td>
+                    <td class='{button_class}'>{name}</td>
                     <td class='{button_class}'>{time}</td>
                     <td>
                         <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
@@ -202,11 +202,12 @@ def admin():
             .line-through-bold {
                 text-decoration: line-through;
                 text-decoration-thickness: 2px;
-                color: #999 !important;
+            }
+            .table-secondary td {
                 background-color: #f8f9fa !important;
             }
-            .table-danger td {
-                background-color: #f8d7da !important;
+            .text-muted {
+                color: #888 !important;
             }
         </style>
     </head>
