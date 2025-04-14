@@ -98,11 +98,11 @@ def handle_message(event):
             except Exception as e:
                 print(f"⚠️ 寫入 Google Sheet 失敗: {e}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～～{display_name}！"))
+                text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～{display_name}！"))
 
     elif "體驗" in msg:
         if user_id != OWNER_ID:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="本預約功能尚未開放給大眾，敬請期待 👀"))
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="本預約功能尚未開\n敬請期待 👀"))
             return
         
         try:
