@@ -204,8 +204,6 @@ def admin():
                     <th>操作</th>
                 </tr>
             </thead>
-<tbody>{table_rows}</tbody>
-
             <tbody>{table_rows}</tbody>
         </table>"""
 
