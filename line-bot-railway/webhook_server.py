@@ -152,7 +152,10 @@ def admin():
         try:
             sorted_reservations = sorted(
                 grouped[date_key],
-                key=lambda r: datetime.strptime(r.get('time', '').replace("我想預約 ", "").strip(), "%m/%d %H:%M")
+                key=lambda r: datetime.strptime(
+                    r.get('time', '').replace("我想預約 ", "").strip(),
+                    "%m/%d %H:%M"
+                )
             )
         except Exception as e:
             print(f"⚠️ 日期排序失敗: {e}")
@@ -163,19 +166,22 @@ def admin():
             uid = r.get('userId', '')
             time = r.get('time', '未知時間')
             clean_time = time.replace("我想預約 ", "").strip()
+
+            # 加上樣式判斷
             row_class = ""
-            button_class = ""
+            text_class = ""
             if r.get("status") == "missed":
                 row_class = "table-danger"
-                button_class = "text-danger fw-bold"
+                text_class = "text-danger fw-bold"
             elif r.get("status") == "done":
                 row_class = "line-through-bold table-secondary"
-                button_class = "text-muted"
+                text_class = "text-muted"
 
+            # 每一列 HTML
             table_rows += f"""
                 <tr class='{row_class}'>
-                    <td class='{button_class}'>{name}</td>
-                    <td class='{button_class}'>{time}</td>
+                    <td class='{text_class}'>{name}</td>
+                    <td class='{text_class}'>{time}</td>
                     <td>
                         <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
                         <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
@@ -191,6 +197,7 @@ def admin():
             <tbody>{table_rows}</tbody>
         </table>"""
 
+    # 整頁 HTML 結構
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -199,16 +206,16 @@ def admin():
         <title>Jenny 預約後台</title>
         <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>
         <style>
-            .line-through-bold {
+            .line-through-bold {{
                 text-decoration: line-through;
                 text-decoration-thickness: 2px;
-            }
-            .table-secondary td {
+            }}
+            .table-secondary td {{
                 background-color: #f8f9fa !important;
-            }
-            .text-muted {
+            }}
+            .text-muted {{
                 color: #888 !important;
-            }
+            }}
         </style>
     </head>
     <body class='container mt-4'>
