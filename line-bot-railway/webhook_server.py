@@ -232,8 +232,11 @@ def admin():
             <div class='col-md-3'>
                 <input type='text' name='newName' class='form-control' placeholder='新名稱' required>
             </div>
-            <input type='hidden' name='pw' value='{pw}'>
             <div class='col-md-3'>
+                <input type='text' name='phone' class='form-control' placeholder='手機號碼 (選填)'>
+            </div>
+            <input type='hidden' name='pw' value='{pw}'>
+            <div class='col-md-3 mt-2'>
                 <button type='submit' class='btn btn-primary'>送出修改</button>
             </div>
         </form>
