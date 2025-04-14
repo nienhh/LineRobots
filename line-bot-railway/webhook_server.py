@@ -146,24 +146,46 @@ def admin():
     section_html = ""
     for date_key in sorted(grouped.keys()):
         table_rows = ""
-        for r in grouped[date_key]:
-            if r.get("status") == "missed":
-                row_class = "table-danger fw-bold"
-            elif r.get("status") == "done":
-                row_class = "text-decoration-line-through text-muted"
-            else:
-                row_class = ""
+        # ✨ 加上這行：先將同一天的預約按照時間排序
+        sorted_reservations = sorted(
+            grouped[date_key],
+            key=lambda r: datetime.strptime(r['time'].replace("我想預約 ", "").strip(), "%m/%d %H:%M")
+        )
 
-            table_rows += f"""
-            <tr class='{row_class}'>
-                <td>{r['displayName']}</td>
-                <td>{r['time']}</td>
-                <td>
-                    <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
-                    <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
-                    <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
-                </td>
-            </tr>"""
+        for r in sorted_reservations:
+            if r.get("status") == "missed":
+                table_rows += f"""
+                <tr class='table-danger'>
+                    <td class='text-danger fw-bold'>{r['displayName']}</td>
+                    <td class='text-danger fw-bold'>{r['time']}</td>
+                    <td>
+                        <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
+                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
+                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
+                    </td>
+                </tr>"""
+            elif r.get("status") == "done":
+                table_rows += f"""
+                <tr class='text-decoration-line-through text-muted'>
+                    <td>{r['displayName']}</td>
+                    <td>{r['time']}</td>
+                    <td>
+                        <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
+                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
+                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
+                    </td>
+                </tr>"""
+            else:
+                table_rows += f"""
+                <tr>
+                    <td>{r['displayName']}</td>
+                    <td>{r['time']}</td>
+                    <td>
+                        <a href='/delete?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
+                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
+                        <a href='/mark_status?userId={r['userId']}&time={r['time'].replace("我想預約 ", "").strip()}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
+                    </td>
+                </tr>"""
 
         section_html += f"""
         <h4 class='mt-5'>📅 {date_key}</h4>
