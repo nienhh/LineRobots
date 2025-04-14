@@ -148,7 +148,7 @@ def admin():
         table_rows = ""
         for r in grouped[date_key]:
             if r.get("status") == "missed":
-                row_class = "text-danger fw-bold"
+                row_class = "table-danger fw-bold"
             elif r.get("status") == "done":
                 row_class = "text-decoration-line-through text-muted"
             else:
