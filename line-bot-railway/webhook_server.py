@@ -1,4 +1,3 @@
-from flask import Flask, request, render_template_string, redirect
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FlexSendMessage
 from linebot.exceptions import InvalidSignatureError
@@ -193,7 +192,16 @@ def admin():
         section_html += f"""
         <h4 class='mt-5'>📅 {date_key}</h4>
         <table class='table table-bordered table-striped'>
-            <thead class='table-dark'><tr><th>名稱</th><th>時間</th><th>操作</th></tr></thead>
+            <thead class='table-dark'>
+                <tr>
+                    <th>名稱</th>
+                    <th>時間</th>
+                    <th>📱 手機號碼</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+<tbody>{table_rows}</tbody>
+
             <tbody>{table_rows}</tbody>
         </table>"""
 
