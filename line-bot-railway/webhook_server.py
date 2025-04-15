@@ -228,20 +228,20 @@ def admin():
             }}
         </style>
         <script>
-          function fillButtonStyle(btn) {
-            if (btn.classList.contains('btn-outline-danger')) {
+          function fillButtonStyle(btn) {{
+            if (btn.classList.contains('btn-outline-danger')) {{
               btn.classList.remove('btn-outline-danger');
               btn.classList.add('btn-danger');
-            }
-            if (btn.classList.contains('btn-outline-warning')) {
+            }}
+            if (btn.classList.contains('btn-outline-warning')) {{
               btn.classList.remove('btn-outline-warning');
               btn.classList.add('btn-warning');
-            }
-            if (btn.classList.contains('btn-outline-success')) {
+            }}
+            if (btn.classList.contains('btn-outline-success')) {{
               btn.classList.remove('btn-outline-success');
               btn.classList.add('btn-success');
-            }
-          }
+            }}
+          }}
         </script>
     </head>
     <body class='container mt-4'>
