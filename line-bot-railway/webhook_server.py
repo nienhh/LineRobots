@@ -186,9 +186,9 @@ def admin():
                     <td class='{text_class}'>{time}</td>
                     <td class='{text_class}'>{phone}</td>
                     <td>
-                        <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger'>刪除</a>
-                        <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning'>過號</a>
-                        <a href='/mark_status?userId={uid}&time={clean_time}&status=done&pw={pw}' class='btn btn-sm btn-outline-success'>已體驗</a>
+                        <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger' onclick='fillButtonStyle(this)'>刪除</a>
+                        <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning' onclick='fillButtonStyle(this)'>過號</a>
+                        <a href='/mark_status?userId={uid}&time={clean_time}&status=done&pw={pw}' class='btn btn-sm btn-outline-success' onclick='fillButtonStyle(this)'>已體驗</a>
                     </td>
                 </tr>
             """
@@ -227,6 +227,22 @@ def admin():
                 color: #888 !important;
             }}
         </style>
+        <script>
+          function fillButtonStyle(btn) {
+            if (btn.classList.contains('btn-outline-danger')) {
+              btn.classList.remove('btn-outline-danger');
+              btn.classList.add('btn-danger');
+            }
+            if (btn.classList.contains('btn-outline-warning')) {
+              btn.classList.remove('btn-outline-warning');
+              btn.classList.add('btn-warning');
+            }
+            if (btn.classList.contains('btn-outline-success')) {
+              btn.classList.remove('btn-outline-success');
+              btn.classList.add('btn-success');
+            }
+          }
+        </script>
     </head>
     <body class='container mt-4'>
         <h2 class='mb-4'>🌸 Jenny 預約後台 🌸</h2>
