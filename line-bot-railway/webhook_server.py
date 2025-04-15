@@ -180,11 +180,18 @@ def admin():
 
             # 每一列 HTML
             phone = r.get("phone", "-")
+            status = r.get("status", "active")
+            status_label = {
+                "active": "🕓 未體驗",
+                "done": "✅ 已體驗",
+                "missed": "⚠️ 過號"
+            }.get(status, "❓ 未知")
             table_rows += f"""
                 <tr class='{row_class}'>
                     <td class='{text_class}'>{name}</td>
                     <td class='{text_class}'>{time}</td>
                     <td class='{text_class}'>{phone}</td>
+                    <td class='{text_class}'>{status_label}</td>
                     <td>
                         <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger' onclick='fillButtonStyle(this)'>刪除</a>
                         <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning' onclick='fillButtonStyle(this)'>過號</a>
@@ -201,6 +208,7 @@ def admin():
                     <th>名稱</th>
                     <th>時間</th>
                     <th>📱 手機號碼</th>
+                    <th>狀態</th>
                     <th>操作</th>
                 </tr>
             </thead>
