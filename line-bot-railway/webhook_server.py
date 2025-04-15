@@ -196,6 +196,7 @@ def admin():
                         <a href='/delete?userId={uid}&time={clean_time}&pw={pw}' class='btn btn-sm btn-outline-danger' onclick='fillButtonStyle(this)'>刪除</a>
                         <a href='/mark_status?userId={uid}&time={clean_time}&status=missed&pw={pw}' class='btn btn-sm btn-outline-warning' onclick='fillButtonStyle(this)'>過號</a>
                         <a href='/mark_status?userId={uid}&time={clean_time}&status=done&pw={pw}' class='btn btn-sm btn-outline-success' onclick='fillButtonStyle(this)'>已體驗</a>
+                        <a href='/mark_status?userId={uid}&time={clean_time}&status=active&pw={pw}' class='btn btn-sm btn-outline-secondary' onclick='fillButtonStyle(this)'>未體驗</a>
                     </td>
                 </tr>
             """
@@ -248,6 +249,10 @@ def admin():
             if (btn.classList.contains('btn-outline-success')) {{
               btn.classList.remove('btn-outline-success');
               btn.classList.add('btn-success');
+            }}
+            if (btn.classList.contains('btn-outline-secondary')) {{
+              btn.classList.remove('btn-outline-secondary');
+              btn.classList.add('btn-secondary');
             }}
           }}
         </script>
