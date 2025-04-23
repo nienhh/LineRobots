@@ -63,9 +63,9 @@ def handle_message(event):
     reserved = load_and_clean_reservations()
 
     if msg.startswith("我想預約"):
-        if user_id != OWNER_ID:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="目前預約功能僅限主理人使用 ✋"))
-            return
+        #if user_id != OWNER_ID:
+            #line_bot_api.reply_message(event.reply_token, TextSendMessage(text="目前預約功能僅限主理人使用 ✋"))
+            #return
         time_str = msg.replace("我想預約 ", "").strip()
         reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
         if time_str in reserved_times:
