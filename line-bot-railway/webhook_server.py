@@ -358,5 +358,16 @@ def edit_reservation():
     else:
         return "❌ 沒有找到符合的預約資料"
 
+@app.route("/reserved/brief")
+def brief_reserved():
+    try:
+        with open(RESERVED_FILE, "r", encoding="utf-8") as f:
+            reserved = json.load(f)
+        return "<br>".join([f"{r['displayName']} - {r['time']} - {r.get('status', 'active')}" for r in reserved])
+    except Exception as e:
+        return f"❌ 錯誤：{e}"
+
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
