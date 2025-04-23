@@ -10,6 +10,8 @@ from flask import Flask, request, render_template_string, redirect
 
 
 app = Flask(__name__)
+now = datetime.now()
+unlock_time = datetime(2025, 4, 24, 12, 0)
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
@@ -94,9 +96,10 @@ def handle_message(event):
                 text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～{display_name}！"))
 
     elif "體驗" in msg:
-        if user_id != OWNER_ID:
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text="本預約功能尚未開\n敬請期待 👀"))
-            return
+        if user_id != OWNER_ID and now < unlock_time:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text="本預約功能尚未開放\n請於 2025/4/25 中午 12:00 後再試 👀"))
+                return
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
@@ -358,14 +361,7 @@ def edit_reservation():
     else:
         return "❌ 沒有找到符合的預約資料"
 
-@app.route("/reserved/brief")
-def brief_reserved():
-    try:
-        with open(RESERVED_FILE, "r", encoding="utf-8") as f:
-            reserved = json.load(f)
-        return "<br>".join([f"{r['displayName']} - {r['time']} - {r.get('status', 'active')}" for r in reserved])
-    except Exception as e:
-        return f"❌ 錯誤：{e}"
+
 
 
 
