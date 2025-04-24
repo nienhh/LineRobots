@@ -96,10 +96,6 @@ def handle_message(event):
                 text=f"預約成功 🎉\n您預約的時間是：{time_str}\nJenny會記得您的名字哦～{display_name}！"))
 
     elif "體驗" in msg:
-        if user_id != OWNER_ID and now < unlock_time:
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text="本預約功能尚未開放\n請於 2025/4/25 中午 12:00 後再試 👀"))
-                return
         try:
             with open(FLEX_FILE, "r", encoding="utf-8") as f:
                 flex = json.load(f)
