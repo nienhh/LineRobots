@@ -10,8 +10,6 @@ from flask import Flask, request, render_template_string, redirect
 
 
 app = Flask(__name__)
-now = datetime.now()
-unlock_time = datetime(2025, 4, 24, 12, 0)
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
@@ -65,9 +63,6 @@ def handle_message(event):
     reserved = load_and_clean_reservations()
 
     if msg.startswith("我想預約"):
-        #if user_id != OWNER_ID:
-            #line_bot_api.reply_message(event.reply_token, TextSendMessage(text="目前預約功能僅限主理人使用 ✋"))
-            #return
         time_str = msg.replace("我想預約 ", "").strip()
         reserved_times = [r["time"].replace("我想預約 ", "").strip() for r in reserved]
         if time_str in reserved_times:
